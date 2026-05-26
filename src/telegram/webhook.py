@@ -50,7 +50,7 @@ async def handle_update(request: Request, session: AsyncSession, secret_header: 
             history = await get_recent_history(session, conv.id, limit=10)
             await append_message(session, conv.id, role="user", content=text)
 
-            result = await run_graph(text, history, llm)
+            result = await run_graph(text, history, llm, user_id=user.id, session=session)
 
             await append_message(session, conv.id, role="assistant", content=result.content, agent=result.agent)
 

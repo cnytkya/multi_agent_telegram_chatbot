@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.config import settings
 from src.db.session import get_session
 from src.db.repository import upsert_user, get_or_create_conversation, append_message, get_recent_history
-from src.agents.research import run_research_agent
+from src.agents.graph import run_graph
 from src.llm.factory import get_llm_provider
 from src.observability.logging import configure_logging
 from src.telegram.webhook import handle_update
@@ -66,21 +66,21 @@ async def chat(req: ChatRequest, session: AsyncSession = Depends(get_session)) -
         history = await get_recent_history(session, conv.id, limit=10)
         await append_message(session, conv.id, role="user", content=req.message)
 
-        result = await run_research_agent(req.message, history, llm)
+        result = await run_graph(req.message, history, llm, user_id=user.id, session=session)
 
-        await append_message(session, conv.id, role="assistant", content=result.content, agent="research")
+        await append_message(session, conv.id, role="assistant", content=result.content, agent=result.agent)
 
     logger.info(
         "chat_complete",
         telegram_id=req.telegram_id,
-        agent="research",
+        agent=result.agent,
         input_tokens=result.input_tokens,
         output_tokens=result.output_tokens,
     )
 
     return ChatResponse(
         reply=result.content,
-        agent="research",
+        agent=result.agent,
         input_tokens=result.input_tokens,
         output_tokens=result.output_tokens,
     )
