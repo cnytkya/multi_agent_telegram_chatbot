@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     anthropic_api_key: str = Field(default="")
     gemini_api_key: str = Field(default="")
     llm_model: str = Field(default="claude-sonnet-4-6")
+    ollama_base_url: str = Field(default="http://localhost:11434")
 
     # Database
     database_url: str = Field(default="postgresql+asyncpg://bot:bot@db:5432/bot")
