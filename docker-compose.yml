@@ -24,18 +24,38 @@ services:
       db:
         condition: service_healthy
 
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    # GPU desteği için: aşağıdaki bloğu uncomment et
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
   app:
     build: .
     ports:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql+asyncpg://bot:bot@db:5432/bot
+      OLLAMA_BASE_URL: http://ollama:11434
     env_file:
       - .env
     depends_on:
       migrate:
         condition: service_completed_successfully
+      ollama:
+        condition: service_started
     restart: unless-stopped
 
 volumes:
   postgres_data:
+  ollama_data:
