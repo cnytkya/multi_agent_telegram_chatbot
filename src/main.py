@@ -1,6 +1,6 @@
 import structlog
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Header, Request, BackgroundTasks
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +11,7 @@ from src.db.repository import upsert_user, get_or_create_conversation, append_me
 from src.agents.research import run_research_agent
 from src.llm.factory import get_llm_provider
 from src.observability.logging import configure_logging
+from src.telegram.webhook import handle_update
 
 logger = structlog.get_logger()
 
@@ -29,6 +30,17 @@ app = FastAPI(title="Multi-Agent Telegram Bot", version="0.1.0", lifespan=lifesp
 @app.get("/health")
 async def health() -> JSONResponse:
     return JSONResponse({"status": "ok", "version": "0.1.0"})
+
+
+@app.post("/webhook")
+async def webhook(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    session: AsyncSession = Depends(get_session),
+    x_telegram_bot_api_secret_token: str | None = Header(default=None),
+) -> JSONResponse:
+    background_tasks.add_task(handle_update, request, session, x_telegram_bot_api_secret_token)
+    return JSONResponse({"ok": True})
 
 
 class ChatRequest(BaseModel):
