@@ -22,6 +22,7 @@ class Settings(BaseSettings):
 
     # App
     log_level: str = Field(default="INFO")
+    license_key: str = Field(default="")
 
 
 settings = Settings()

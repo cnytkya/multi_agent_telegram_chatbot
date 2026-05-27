@@ -12,12 +12,14 @@ from src.agents.graph import run_graph
 from src.llm.factory import get_llm_provider
 from src.observability.logging import configure_logging
 from src.telegram.webhook import handle_update
+from src.license import validate_license
 
 logger = structlog.get_logger()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    validate_license(settings.license_key)
     configure_logging(settings.log_level)
     logger.info("app_starting", log_level=settings.log_level, llm_provider=settings.llm_provider)
     yield
